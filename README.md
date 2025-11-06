@@ -9,8 +9,8 @@ Python solution for selecting optimal ideal functions using least squares regres
 
 ## 🚀 Quick Start
 ```bash
-git clone https://github.com/yourusername/ideal-function-assignment.git
-cd ideal-function-assignment
+git clone https://github.com/YuvrajShekhar/ideal-function-assignment-python.git
+cd ideal-function-assignment-python
 pip install -r requirements.txt
 python main.py
 ```
