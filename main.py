@@ -7,7 +7,7 @@ Reads data from data/ folder and outputs to results/ folder.
 
 Author: Yuvraj Shekhar
 Matriculation Number: 10244366
-Date: 06/11/2025
+Date: 10/11/2025
 """
 
 import pandas as pd
@@ -26,6 +26,9 @@ from sqlalchemy.ext.declarative import declarative_base
 # Visualization libraries
 import matplotlib.pyplot as plt
 import seaborn as sns
+from bokeh.plotting import figure, output_file, save
+from bokeh.layouts import gridplot
+from bokeh.models import HoverTool
 
 # Configure visualization settings
 sns.set_style("whitegrid")
@@ -505,6 +508,127 @@ class Visualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         logger.info(f"Dashboard saved to {save_path}")
         plt.show()
+        
+    def create_interactive_plots(self, save_path: str = None):
+        """
+        Create interactive Bokeh visualizations.
+        
+        Generates two interactive plots:
+        - Training data with ideal functions overlay
+        - Test data mapping results with unmapped points
+        
+        The plots are saved as an HTML file that can be opened in any browser.
+        Users can interact with the plots (pan, zoom, hover for details).
+        
+        Args:
+            save_path: Path to save the HTML file. 
+                      If None, saves to results/visualizations/bokeh_interactive.html
+        
+        Returns:
+            None. Saves HTML file to disk.
+        """
+        from bokeh.plotting import figure, output_file, save
+        from bokeh.layouts import gridplot
+        
+        if save_path is None:
+            save_path = str(VISUALIZATIONS_DIR / "bokeh_interactive.html")
+        
+        logger.info("Creating interactive Bokeh visualizations...")
+        
+        # Plot 1: Training functions with ideal functions
+        p1 = figure(
+            title="Training Data vs Best-Fit Ideal Functions",
+            x_axis_label='X',
+            y_axis_label='Y',
+            width=700,
+            height=400,
+            tools="pan,wheel_zoom,box_zoom,reset,save"
+        )
+        
+        colors = ['red', 'blue', 'green', 'orange']
+        
+        for train_func, color in zip(['y1', 'y2', 'y3', 'y4'], colors):
+            # Plot training data as lines
+            p1.line(
+                self.train_data['x'],
+                self.train_data[train_func],
+                legend_label=f'Training {train_func}',
+                color=color,
+                line_width=2,
+                alpha=0.8
+            )
+            
+            # Plot ideal function as dashed line
+            ideal_func = self.best_fits[train_func]['ideal_function']
+            p1.line(
+                self.ideal_data['x'],
+                self.ideal_data[ideal_func],
+                legend_label=f'Ideal {ideal_func}',
+                color=color,
+                line_dash='dashed',
+                line_width=2,
+                alpha=0.8
+            )
+        
+        p1.legend.location = "top_left"
+        p1.legend.click_policy = "hide"  # Allow hiding/showing series by clicking legend
+        
+        # Plot 2: Test data mapping results
+        p2 = figure(
+            title="Test Data Mapping Results",
+            x_axis_label='X',
+            y_axis_label='Y',
+            width=700,
+            height=400,
+            tools="pan,wheel_zoom,box_zoom,reset,save"
+        )
+        
+        if self.mappings:
+            mapping_df = pd.DataFrame(self.mappings)
+            
+            # Plot successfully mapped points
+            p2.scatter(
+                mapping_df['x'],
+                mapping_df['y'],
+                size=8,
+                color='red',
+                alpha=0.6,
+                legend_label='Mapped Points'
+            )
+            
+            # Calculate unmapped points
+            mapped_indices = set()
+            for mapping in self.mappings:
+                mask = (abs(self.test_data['x'] - mapping['x']) < 1e-10) & \
+                       (abs(self.test_data['y'] - mapping['y']) < 1e-10)
+                if mask.any():
+                    mapped_indices.add(mask.idxmax())
+            
+            unmapped_data = self.test_data.drop(list(mapped_indices))
+            
+            # Plot unmapped points
+            if not unmapped_data.empty:
+                p2.scatter(
+                    unmapped_data['x'],
+                    unmapped_data['y'],
+                    size=8,
+                    color='gray',
+                    alpha=0.6,
+                    legend_label='Unmapped Points'
+                )
+        
+        p2.legend.location = "top_left"
+        p2.legend.click_policy = "hide"
+        
+        # Create grid layout (2 plots stacked vertically)
+        grid = gridplot([[p1], [p2]])
+        
+        # Save to HTML file
+        output_file(save_path)
+        save(grid)
+        
+        logger.info(f"Interactive Bokeh plots saved to {save_path}")
+        print(f"   ✓ Bokeh HTML saved: {save_path}")
 
 
 # =============================================================================
@@ -554,6 +678,7 @@ def run_analysis():
         print("[7/7] Generating Visualizations...")
         visualizer = Visualizer(train_data, ideal_data, test_data, best_fits, mappings)
         visualizer.create_comprehensive_dashboard()
+        visualizer.create_interactive_plots()
         
         # Display Summary
         print("\n" + "=" * 70)
