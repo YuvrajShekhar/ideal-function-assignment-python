@@ -4,6 +4,8 @@
 **Student:** Yuvraj Shekhar  
 **Matriculation Number:** 10244366
 
+**Google Collab Link:** https://colab.research.google.com/drive/1MrHh5oXs8uOqW6xP1qigBUYpXcNrHXC2?usp=sharing
+
 ## 📋 Overview
 Python solution for selecting optimal ideal functions using least squares regression and mapping test data with √2 criterion.
 
